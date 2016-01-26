@@ -10,7 +10,7 @@ require_once ("./WebService.php");
 $json = array();
 
 $numPeticion = $_POST['numPeticion'];
-//$numPeticion = 3;
+//$numPeticion = 7;
 $peticion = new WebService();
 
 switch ($numPeticion) {
@@ -45,8 +45,15 @@ switch ($numPeticion) {
         break;
     case 7:
         $idUsuario =  $_POST['idUsuario'];
-        //$idUsuario = 5;
+        $idUsuario = 5;
         $json = $peticion->obtenerRutas($idUsuario);
+        break;
+    case 8:
+        $peticion->imagenRuta();
+        break;
+    case 9:
+        break;
+    case 10:
         break;
 }
 

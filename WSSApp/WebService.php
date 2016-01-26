@@ -63,37 +63,97 @@ class WebService extends Conexion {
         return json_encode($json);
     }
     
-    public function obtenerRutas($idUsuario){
+    public function obtenerRutas($idUsuario) {
         $query = "Select r.idRuta,"
                 . "r.cadenaRuta,"
-                . "r.municipio,"
+                . "r.municipio as siglas,"
+                . " m.nombre as municipio,"
+                . " e.nombre as estado ,"
                 . "r.tiempoManual,"
                 . "r.tiempoAutomatico,"
-                . "r.estatus "
-                . "from ruta r "
+                . "r.estatus from ruta r "
                 . "inner join rutaUsuario ru "
                 . "on r.idRuta = ru.idRuta "
+                . "inner join municipio m "
+                . "on m.siglas = r.municipio "
+                . "inner join estado e "
+                . "on e.idEstado = m.idEstado "
                 . "where ru.idUsuario = :idUsuario "
                 . "and r.vigente = 1;";
         $conexion = $this->conn();
         $sql = $conexion->prepare($query);
-        $sql->execute(array(":idUsuario"=>$idUsuario));
-        
-        if($sql->rowCount()){
-            while($row = $sql->fetchAll(PDO::FETCH_CLASS)){
+        $sql->execute(array(":idUsuario" => $idUsuario));
+
+        if ($sql->rowCount()) {
+            while ($row = $sql->fetchAll(PDO::FETCH_CLASS)) {
                 $json['rutas'] = $row;
             }
-            $json['respuesta'] = [['echo'=>TRUE]];
+
+            for ($i = 0; $i < count($json['rutas']); $i++) {
+                $idRuta = $json['rutas'][$i]->idRuta;
+                $cadenaRuta = $json['rutas'][$i]->cadenaRuta;
+                $destinos = $this->obtenerPuntosEncuesta($idRuta);
+                $centro = $this->puntoCentral($destinos['puntos']);
+                $json['rutas'][$i]->destinos = $destinos;
+                $json['rutas'][$i]->centro = $centro;
+                $json['rutas'][$i]->rutaImagen =$this->imagenRuta($centro, $cadenaRuta);
+            }
+
+            $json['respuesta'] = [['echo' => TRUE]];
         } else {
-            $json['respuesta'] = [['echo'=>FALSE]];
+            $json['respuesta'] = [['echo' => FALSE]];
+        }
+
+        return json_encode($json);
+    }
+
+    protected function puntoCentral($destinos) {
+        
+        for ($i = 0; $i < count($destinos); $i++) {
+            
+            $x[] = $destinos[$i]->latitud;
+            $y[] = $destinos[$i]->longitud;
         }
         
-        return json_encode($json);
+        $xS = $this->menorMayor($x);
+        $yS = $this->menorMayor($y);
         
+        /*echo '<br><br>'.var_dump($xS).'<br><br>';
+        echo '<br><br>'.var_dump($yS).'<br><br>';*/
+        
+        $xC = (($xS->menor-$xS->mayor)/2)+$xS->mayor;
+        $yC = (($yS->menor-$yS->mayor)/2)+$yS->mayor;
+        
+        $coordenada = new stdClass();
+        $coordenada->lat = $xC;
+        $coordenada->lng = $yC;
+        
+        return $coordenada;
+    }
+        
+    protected function menorMayor($arreglo){
+        $menor = $arreglo[0];
+        $mayor = $arreglo[0];
+        
+        foreach($arreglo as $valor){
+            if($valor<$menor ){
+                $menor = $valor;
+            }else if($valor>$mayor){
+                $mayor = $valor;
+            }
+        }
+        $menorMayor = new stdClass();
+        $menorMayor->menor = $menor;
+        $menorMayor->mayor = $mayor;
+        /*echo '<br>'.var_dump($arreglo);
+        echo '<br>'.var_dump($menor);
+        echo '<br>'.var_dump($mayor);
+        echo '<br><br>'.  var_dump($menorMayor).'<br><br>';*/
+        
+        return $menorMayor;
     }
 
     public function obtenerPuntosEncuesta($idRuta) {
-        $json['mas'] = [['mas'=>$idRuta,"sql"=>$sql]];
         $query = "Select  r.idRuta,"
                 . "p.*,"
                 . "r.cadenaRuta "
@@ -113,14 +173,14 @@ class WebService extends Conexion {
             while ($row = $sql->fetchAll(PDO::FETCH_CLASS)) {
                 $json['puntos'] = $row;
             }
-            $json['respuesta'] = [['echo' => TRUE]];
         } else {
             $json['respuesta'] = [['echo' => FALSE]];
         }
-
-        //$json['mas'] = [['mas'=>$idRuta,"sql"=>$sql]];
-        return json_encode($json);
+  
+        return $json;
     }
+    
+
 
     Public function obtenerPuntosBrigada($idBrigada, $idUsuario) {
         $query = "Select p.*,"
@@ -420,6 +480,18 @@ class WebService extends Conexion {
         $conexion = $this->conn();
         $sql = $conexion->prepare($query);
         $sql->execute(array(':idUsuario'=>$idUsuario,':latidud'=>$latitud,':longitud'=>$longitud,':idAccion'=>$idAccion));
+    }
+    
+    
+    public function imagenRuta($central,$cadenaRuta){
+        $central = $central->lat.",".$central->lng;
+        $url = "https://maps.googleapis.com/maps/api/staticmap?&scale=4"."&%center=".$central."&zoom=16&size=800x480&path=weight:5%7Ccolor:blue%7Cenc:".$cadenaRuta."&key=AIzaSyCN9dweEHH0yQXVVLyuCTxa_Es1Vk0gzJY";     
+        
+        //$file = fopen($url,'r');
+        
+        //$final = base64_decode($file);
+        
+        return $url;
     }
             
     
