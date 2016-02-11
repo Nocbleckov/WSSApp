@@ -10,7 +10,7 @@ require_once ("./WebService.php");
 $json = array();
 
 $numPeticion = $_POST['numPeticion'];
-//$numPeticion = 7;
+//$numPeticion = 11;
 $peticion = new WebService();
 
 switch ($numPeticion) {
@@ -52,8 +52,39 @@ switch ($numPeticion) {
         $peticion->imagenRuta();
         break;
     case 9:
+        $arreglo = $_POST['coord'];
+        $json = $peticion->pesoMax($arreglo);
         break;
     case 10:
+        
+        $cadenaRuta = $_POST['cadenaRuta'];
+        $siglas = $_POST['siglas'];
+        $tiempoManual = $_POST['tiempoManual'];
+        $idAccionCambio = $_POST['idAccionCambio'];
+        $idUsuario = $_POST['idUsuario'];
+        $idRutaActual = $_POST['idRutaActual'];
+        $arregloPuntos = $_POST['arregloPuntos'];
+        
+        /*$cadenaRuta = "k|rdCrimoRu@cAsAdAyApAu@gAmBmCo@h@eBzAaAx@]qA[qAKw@[RkG|FS?aAd@EMY}@X|@DL`Ae@HS\]pF_Fj@[LEpCeCbAw@zFcFvF}EbKyId@[FAzBTnCFF?CUAU?c@r@eIaD[ZgDPuBQtBaIy@kAMmB|AsFvEgDpC_AsAeDuE";
+        $siglas = "AGS1";
+        $tiempoManual = "133";
+        $idAccionCambio = "345";
+        $idUsuario = "5";
+        $idRutaActual = "14";*/
+        
+        $json = $peticion->updateRutaUsuario($cadenaRuta, $siglas, $tiempoManual, $idAccionCambio, $idUsuario, $idRutaActual,$arregloPuntos);
+        
+        break;
+    case 11:
+        
+        //$idRuta = 16;
+        //$arregloPuntos = '[{"idRuta":1},{"idRuta":27},{"idRuta":26},{"idRuta":29},{"idRuta":28},{"idRuta":30}]';
+        
+        $peticion->asignarPuntosRuta($idRuta, $arregloPuntos);
+        break;
+    case 12:
+        break;
+    case 13:
         break;
 }
 
